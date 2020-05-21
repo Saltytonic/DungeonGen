@@ -1,10 +1,14 @@
-# Imports
 from itertools import chain
 import helperfuncs as hf
-import pygame
 import random
+import math
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
+import pygame
 
 # Initialization
+
 pygame.init()
 random.seed()
 
@@ -14,9 +18,9 @@ icon = pygame.image.load("door3.png")
 pygame.display.set_icon(icon)
 
 # Global values
-HEIGHT = 100
-WIDTH = 100
-GRID_SIZE = 10
+HEIGHT = 800
+WIDTH = 600
+GRID_SIZE = 20
 ROOM_SIZE = 5
 
 # Create the display
@@ -32,19 +36,18 @@ mapGrid = [[(x,y,-1) for x in range(mapY)] for y in range(mapX)]
 edgeBuffer = math.floor(ROOM_SIZE/2) + 1
 
 # Mark borders as invalid spots
-for row in mapGrid:
-    for col in mapGrid[row]:
-        if row < 
+for row in range(len(mapGrid)):
+    for col in range(len(mapGrid[row])):
+        if row <  edgeBuffer or row > len(mapGrid) or \
+            col <  edgeBuffer or col > len(mapGrid[row]):
+                temp = mapGrid[row][col]
+                mapGrid[row][col] = (temp[0], temp[1], 0)
 
 # Used for randomly selecting valid areas in destructive manner
-validGrid = hf.edgelessValidGrid(ROOM_SIZE, mapGrid)
+validGrid = hf.validGrid(ROOM_SIZE, mapGrid)
 
-# Create the rooms on the mapGrid
-for i in range(numRooms):
-    # Choose a spot for the room
-    choice = random.choice(validGrid)
+numRooms = 3
 
-    # Update the mapGrid to 
 
 
 # Game Loop
@@ -58,14 +61,21 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             has_gen = False
 
-    screen.fill((137, 137, 137))
+    screen.fill((255, 255, 255))
 
     if not has_gen:
-        cur_state = gen_state()
-        has_gen = True
-    
-    for item in cur_state:
-        pygame.draw.rect(screen, item[0], item[1])
+        # Create the rooms on the mapGrid
+        for i in range(numRooms):
+            # Choose a spot for the room
+            choice = random.choice(validGrid)
+            mapGrid[choice[1]][choice[0]] = (choice[1], choice[0], 1)
 
+        cur_state = list(chain.from_iterable(zip(*mapGrid)))
+        has_gen = True
+
+    for item in cur_state:
+        # print(item[0], item[1])
+        if item[2] == 1:
+            pygame.draw.rect(screen, (0,0,0), pygame.Rect(item[1]*GRID_SIZE, item[0]*GRID_SIZE, GRID_SIZE, GRID_SIZE))
 
     pygame.display.update()
