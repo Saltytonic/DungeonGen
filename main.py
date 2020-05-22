@@ -19,7 +19,7 @@ pygame.display.set_icon(icon)
 WIDTH = 800
 HEIGHT = 600
 GRID_SIZE = 20
-ROOM_SIZE = 10
+ROOM_SIZE = 3
 
 # Create the display
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -38,6 +38,7 @@ MAP_X = int(WIDTH/GRID_SIZE)
 MAP_Y = int(HEIGHT/GRID_SIZE)
 
 def clamp(n, minn, maxn):
+    """Returns a value between the max and min given."""
     out1 = min(maxn, n)
     return max(out1, minn)
 
@@ -72,6 +73,35 @@ def build_room(room_pos, grid):
             if grid[_x2][_y2][2].type == TileType.empty or set_state == TileType.room:
                 grid[_x2][_y2][2].type = set_state
 
+class Room:
+    """Parent class of rooms."""
+    def __init__(self):
+        length1 = random.randrange(60, 180, 1)
+        length2 = random.randrange(math.floor(length1/2), length1*2, 1)
+
+        self.v1 = pygame.Vector2(length1, 0)
+        self.v2 = pygame.Vector2(length2, 0)
+        self.v3 = pygame.Vector2(self.v1.x, 0)
+        self.v4 = pygame.Vector2(self.v2.x, 0)
+
+        rand_angle = random.randrange(0, 360, 1)
+        self.v1 = self.v1.rotate(rand_angle)
+        self.v2 = self.v2.rotate(rand_angle + 90)
+        self.v3 = self.v3.rotate(rand_angle + 180)
+        self.v4 = self.v4.rotate(rand_angle + 270)
+
+        print(self.v1)
+        print(self.v2)
+        print(self.v3)
+        print(self.v4)
+
+        p1 = (WIDTH/2, HEIGHT/2)
+        p2 = (p1[0] + self.v1.x, p1[1] + self.v1.y)
+        p3 = (p2[0] + self.v2.x, p2[1] + self.v2.y)
+        p4 = (p3[0] + self.v3.x, p3[1] + self.v3.y)
+
+        self.points = [p1, p2, p3, p4]
+
 def build_grid():
     """Returns an empty grid equal in size to the screen size."""
     empty_grid = [[(x, y, TileType()) for y in range(MAP_Y)] for x in range(MAP_X)]
@@ -93,9 +123,6 @@ def mark_border_invalid(grid):
         room building purposes."""
     # Distance to not spawn rooms in
     edge_buffer = math.floor(ROOM_SIZE/2) + 1
-    #print("Cols: ", len(grid))
-    #print("Rows: ", len(grid[0]))
-    #print("---------------------------")
     for _x_pos, _col in enumerate(grid):
         for _y_pos, _row in enumerate(grid[_x_pos]):
             if (_x_pos < edge_buffer) or (_x_pos >= (len(grid)-edge_buffer)) or \
@@ -135,10 +162,23 @@ def get_border(grid_list):
 
     return copy
 
+def draw_coords():
+    """Draws coordinates at each grid on the screen."""
+    # Add text coords to each tile in the grid
+    for col in range(math.floor(WIDTH/GRID_SIZE)):
+        for row in range(math.floor(HEIGHT/GRID_SIZE)):
+            x_pos = col * GRID_SIZE
+            y_pos = row * GRID_SIZE
+            text = str("%s,%s" % (str(x_pos), str(y_pos)))
+            text_surf, text_rect = text_objects(text, small_font)
+            text_rect.center = ((GRID_SIZE/2) + x_pos, (GRID_SIZE/2) + y_pos)
+            screen.blit(text_surf, text_rect)
+
+
 # Game Loop
 RUNNING = True
 GENERATED = False
-small_font = pygame.font.Font('freesansbold.ttf', 9)
+small_font = pygame.font.Font('freesansbold.ttf', 20)
 
 while RUNNING:
     for event in pygame.event.get():
@@ -149,17 +189,24 @@ while RUNNING:
 
     screen.fill((255, 255, 255))
 
-    # Add text coords to each tile in the grid
-    for col in range(math.floor(WIDTH/GRID_SIZE)):
-        for row in range(math.floor(HEIGHT/GRID_SIZE)):
-            x_pos = col * GRID_SIZE
-            y_pos = row * GRID_SIZE
-            TEXT = str("%s,%s" % (str(x_pos), str(y_pos)))
-            text_surf, text_rect = text_objects(TEXT, small_font)
-            text_rect.center = ((GRID_SIZE/2) + x_pos, (GRID_SIZE/2) + y_pos)
-            screen.blit(text_surf, text_rect)
+    if not GENERATED:
+        room = Room()
+        #draw(room)
+        GENERATED = True
+    
+    if GENERATED:
+        pygame.draw.polygon(screen, (0,0,0), room.points)
 
-    # Only run when new generation
+
+    (mouse_x, mouse_y) = pygame.mouse.get_pos()
+    mouse_coords = str("%s, %s" % (str(mouse_x), str(mouse_y)))
+    text_surf, text_rect = text_objects(mouse_coords, small_font)
+    text_rect.center = (50, 20)
+    screen.blit(text_surf, text_rect)
+
+    pygame.display.update()
+
+"""     # Only run when new generation
     if not GENERATED:
         # Create a new empty grid
         map_grid = build_grid()
@@ -168,7 +215,7 @@ while RUNNING:
         mark_border_invalid(map_grid)
 
         # Marks all rooms on the map_grid
-        ROOM_COUNT = 5
+        ROOM_COUNT = 8
         generate_map(ROOM_COUNT, map_grid)
 
         rooms = get_rooms(map_grid)
@@ -183,6 +230,4 @@ while RUNNING:
 
     for invalid in invalids:
         rect = pygame.Rect(invalid[0]*GRID_SIZE, invalid[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE)
-        pygame.draw.rect(screen, (255, 0, 0), rect)
-
-    pygame.display.update()
+        pygame.draw.rect(screen, (255, 0, 0), rect) """
