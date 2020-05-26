@@ -76,17 +76,28 @@ def build_room(room_pos, grid):
 class Room:
     """Parent class of rooms."""
     def __init__(self, walls):
-        # Create vectors of varying length
-        self.vectors = [pygame.Vector2(random.randint(35, 40)).rotate(random.randint(-180,180)) for _ in range(walls)]
+        # Choose some vector lengths. All angles are 15 degrees for now
+        valid_angles = [angle for angle in range(-180, 180, 45)]
+        self.vectors = []
+        min_len = 20
+        max_len = 40
+        for _ in range(walls):
+            angle = random.choice(valid_angles)
+            self.vectors.append(pygame.Vector2(random.randint(min_len, max_len)).rotate(angle))
+            valid_angles.pop(valid_angles.index(angle))
 
         # Sort the vectors by angle
         self.vectors = [vector for vector in sorted(self.vectors, key=lambda item: item.angle_to(pygame.Vector2(1,0)))]
 
+        # Make the walls all be within 45 degree increments of one another, shortest path
+        for pos, vector in enumerate(self.vectors[0:-1]):
+            print("Angle between",pos,"and",(pos+1),"is",self.vectors[pos+1].angle_to(vector))
+
         self.place_room()
 
     def place_room(self):
-        point_x = random.randint(0, WIDTH)
-        point_y = random.randint(0, HEIGHT)
+        point_x = 400 #random.randint(0, WIDTH)
+        point_y = 300 #random.randint(0, HEIGHT)
 
         valid = False
         correct_x = 0
@@ -200,9 +211,9 @@ while RUNNING:
     screen.fill((255, 255, 255))
 
     if not GENERATED:
-        rooms.append(Room(random.randint(3,20)))
+        rooms.append(Room(random.randint(3,8)))
         GENERATED = True
-    
+
     if GENERATED:
         for room in rooms:
             room.draw_room(screen, (0,0,0))
