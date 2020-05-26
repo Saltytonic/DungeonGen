@@ -75,32 +75,38 @@ def build_room(room_pos, grid):
 
 class Room:
     """Parent class of rooms."""
-    def __init__(self):
-        length1 = random.randrange(60, 180, 1)
-        length2 = random.randrange(math.floor(length1/2), length1*2, 1)
+    def __init__(self, walls):
+        # Create vectors of varying length
+        self.vectors = [pygame.Vector2(random.randint(35, 40)).rotate(random.randint(-180,180)) for _ in range(walls)]
 
-        self.v1 = pygame.Vector2(length1, 0)
-        self.v2 = pygame.Vector2(length2, 0)
-        self.v3 = pygame.Vector2(self.v1.x, 0)
-        self.v4 = pygame.Vector2(self.v2.x, 0)
+        # Sort the vectors by angle
+        self.vectors = [vector for vector in sorted(self.vectors, key=lambda item: item.angle_to(pygame.Vector2(1,0)))]
 
-        rand_angle = random.randrange(0, 360, 1)
-        self.v1 = self.v1.rotate(rand_angle)
-        self.v2 = self.v2.rotate(rand_angle + 90)
-        self.v3 = self.v3.rotate(rand_angle + 180)
-        self.v4 = self.v4.rotate(rand_angle + 270)
+        self.place_room()
 
-        print(self.v1)
-        print(self.v2)
-        print(self.v3)
-        print(self.v4)
+    def place_room(self):
+        point_x = random.randint(0, WIDTH)
+        point_y = random.randint(0, HEIGHT)
 
-        p1 = (WIDTH/2, HEIGHT/2)
-        p2 = (p1[0] + self.v1.x, p1[1] + self.v1.y)
-        p3 = (p2[0] + self.v2.x, p2[1] + self.v2.y)
-        p4 = (p3[0] + self.v3.x, p3[1] + self.v3.y)
+        valid = False
+        correct_x = 0
+        correct_y = 0
 
-        self.points = [p1, p2, p3, p4]
+        while not valid:
+            for vector in self.vectors:
+                vector.x += point_x
+                vector.y += point_y
+
+                print("X:", vector.x)
+                print("Y:", vector.y)
+            valid = True
+        print("-----------------------")
+
+    def draw_room(self, surface, color):
+        pygame.draw.polygon(surface, color, self.get_points())
+
+    def get_points(self):
+        return [(vector.x,vector.y) for vector in self.vectors]
 
 def build_grid():
     """Returns an empty grid equal in size to the screen size."""
@@ -179,24 +185,27 @@ def draw_coords():
 RUNNING = True
 GENERATED = False
 small_font = pygame.font.Font('freesansbold.ttf', 20)
+rooms = []
 
 while RUNNING:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             RUNNING = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            GENERATED = False
+            if event.button == 3:
+                rooms = []
+            else:
+                GENERATED = False
 
     screen.fill((255, 255, 255))
 
     if not GENERATED:
-        room = Room()
-        #draw(room)
+        rooms.append(Room(random.randint(3,20)))
         GENERATED = True
     
     if GENERATED:
-        pygame.draw.polygon(screen, (0,0,0), room.points)
-
+        for room in rooms:
+            room.draw_room(screen, (0,0,0))
 
     (mouse_x, mouse_y) = pygame.mouse.get_pos()
     mouse_coords = str("%s, %s" % (str(mouse_x), str(mouse_y)))
