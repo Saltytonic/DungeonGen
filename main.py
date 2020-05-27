@@ -72,12 +72,19 @@ def build_room(room_pos, grid):
 
             if grid[_x2][_y2][2].type == TileType.empty or set_state == TileType.room:
                 grid[_x2][_y2][2].type = set_state
+@dataclass
+class Shape:
+    name: str = ""
+    points: list = []
 
+    def getShape(self, )    
+
+class Square
 class Room:
     """Parent class of rooms."""
     def __init__(self, walls):
         # Choose some vector lengths. All angles are 15 degrees for now
-        valid_angles = [angle for angle in range(-180, 180, 45)]
+        valid_angles = list(range(-180, 180, 45))
         self.vectors = []
         min_len = 20
         max_len = 40
@@ -87,15 +94,16 @@ class Room:
             valid_angles.pop(valid_angles.index(angle))
 
         # Sort the vectors by angle
-        self.vectors = [vector for vector in sorted(self.vectors, key=lambda item: item.angle_to(pygame.Vector2(1,0)))]
+        self.vectors = sorted(self.vectors, key=lambda item: item.angle_to(pygame.Vector2(1, 0)))
 
         # Make the walls all be within 45 degree increments of one another, shortest path
         for pos, vector in enumerate(self.vectors[0:-1]):
-            print("Angle between",pos,"and",(pos+1),"is",self.vectors[pos+1].angle_to(vector))
+            print("Angle between", pos, "and", (pos+1), "is", self.vectors[pos+1].angle_to(vector))
 
         self.place_room()
 
     def place_room(self):
+        """Draws the room to the screen"""
         point_x = 400 #random.randint(0, WIDTH)
         point_y = 300 #random.randint(0, HEIGHT)
 
@@ -105,8 +113,8 @@ class Room:
 
         while not valid:
             for vector in self.vectors:
-                vector.x += point_x
-                vector.y += point_y
+                vector.x = round(vector.x) + point_x
+                vector.y = round(vector.y) + point_y
 
                 print("X:", vector.x)
                 print("Y:", vector.y)
@@ -117,7 +125,7 @@ class Room:
         pygame.draw.polygon(surface, color, self.get_points())
 
     def get_points(self):
-        return [(vector.x,vector.y) for vector in self.vectors]
+        return [(vector.x, vector.y) for vector in self.vectors]
 
 def build_grid():
     """Returns an empty grid equal in size to the screen size."""
@@ -211,7 +219,7 @@ while RUNNING:
     screen.fill((255, 255, 255))
 
     if not GENERATED:
-        rooms.append(Room(random.randint(3,8)))
+        rooms.append(Room(random.randint(4, 8)))
         GENERATED = True
 
     if GENERATED:
